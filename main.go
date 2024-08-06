@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/Mondal-Prasun/rssAgrigateServer/internal/database"
 	"github.com/go-chi/chi/v5"
@@ -41,9 +42,13 @@ func main() {
 		log.Fatal("Database connection failed", err)
 	}
 
+	db := database.New(dbConnection)
+
 	apiCfg := apiConfig{
-		db: database.New(dbConnection),
+		db: db,
 	}
+
+	go startScraping(db, 10, time.Minute)
 
 	route := chi.NewRouter()
 
@@ -65,6 +70,10 @@ func main() {
 	v1Router.Post("/user", apiCfg.handlerCreateUser)
 	v1Router.Get("/getUser", apiCfg.middlewareAuth(apiCfg.handlerGetUser))
 	v1Router.Post("/feed", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
+	v1Router.Get("/feed", apiCfg.handlerGetAllFeed)
+	v1Router.Post("/feedFollow", apiCfg.middlewareAuth(apiCfg.handlerCreateFeedFollow))
+	v1Router.Get("/feedFollow", apiCfg.middlewareAuth(apiCfg.handlerGetFeedFollow))
+	v1Router.Delete("/feedFollow/{feedFollowId}", apiCfg.middlewareAuth(apiCfg.handlerDeleteFeedFollow))
 
 	route.Mount("/v1", v1Router)
 

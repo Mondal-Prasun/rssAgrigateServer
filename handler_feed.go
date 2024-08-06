@@ -49,3 +49,26 @@ func (apiCfg *apiConfig) handlerCreateFeed(w http.ResponseWriter, h *http.Reques
 
 	respondWithJson(w, 201, parsedFeed)
 }
+
+func (apiCfg *apiConfig) handlerGetAllFeed(w http.ResponseWriter, h *http.Request) {
+
+	feeds, err := apiCfg.db.GetFeeds(h.Context())
+	if err != nil {
+		respondWithError(w, 404, fmt.Sprintf("Cannot fetch feeds: %v", err))
+	}
+
+	alteredFeeds := []Feed{}
+
+	for _, value := range feeds {
+		alteredFeeds = append(alteredFeeds, Feed{
+			ID:        value.ID,
+			Createdat: value.Createdat,
+			Updatedat: value.Updatedat,
+			Name:      value.Name,
+			Url:       value.Url,
+			Userid:    value.Userid,
+		})
+	}
+
+	respondWithJson(w, 201, alteredFeeds)
+}
